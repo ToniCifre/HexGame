@@ -21,6 +21,8 @@ public class TestPlayer implements IPlayer, IAuto {
             for (j = 0; j < s.getSize()-1; j++) {
                 if (s.getPos(i, j) == 0) {
                     return new Point(i, j);
+                }else{
+                    System.out.println(s.getPos(i,j));
                 }
             }
         }
