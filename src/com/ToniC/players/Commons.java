@@ -24,7 +24,7 @@ class Commons {
             new Point(-2, 1), new Point(-1, -1), new Point(1, -2));
 
 
-    Point checkMoves(HexGameStatus tauler, List<Point> l, int color){
+    Point checkMoves(HexGameStatus tauler, Set<Point> l, int color){
         List<Point> winL =  l.stream().parallel().filter(point -> {
             HexGameStatus nouTauler = new HexGameStatus(tauler);
             nouTauler.placeStone(point, color);

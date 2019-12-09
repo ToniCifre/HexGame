@@ -45,8 +45,8 @@ public class ParallelPlayer implements IPlayer, IAuto {
             return new Point(5,5);
         }
 
-//        Point p = commons.checkMoves(tauler, l, color);
-//        if (p != null) return p;
+        Point p = commons.checkMoves(tauler, l, color);
+        if (p != null) return p;
 
         bestAlpha = new AtomicReference<>(Float.NEGATIVE_INFINITY);
         AtomicReference<Point> bestmove = new AtomicReference<>(new Point(-1, -1));
@@ -73,8 +73,8 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
 
     private float max_value(HexGameStatus t, Set<Point> l, float alpha, float beta, int d){
-        if(d<=0) { return 0; }
-        else{
+        if(d<=0) { return 0;
+        } else{
             for(Point moviment : l) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
                 nouTauler.placeStone(moviment,color);
@@ -84,7 +84,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
                 Set<Point> newList = new HashSet<>(l);
                 newList.remove(moviment);
                 newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
-                alpha = Math.max(alpha, min_value(nouTauler, newList, alpha, beta, d));
+                alpha = Math.max(alpha, min_value(nouTauler, newList, alpha, beta, d-1));
 
                 if(beta <= alpha) return beta;
             }
@@ -93,21 +93,26 @@ public class ParallelPlayer implements IPlayer, IAuto {
     }
 
     private float min_value(HexGameStatus t, Set<Point> l, float alpha, float beta, int d) {
-        for(Point moviment : l){
-            HexGameStatus nouTauler = new HexGameStatus(t);
-            nouTauler.placeStone(moviment,-color);
+        if(d<=0) { return 0;
+        } else {
+            for (Point moviment : l) {
+                HexGameStatus nouTauler = new HexGameStatus(t);
+                nouTauler.placeStone(moviment, -color);
 
-            if(nouTauler.isGameOver()){ return Float.NEGATIVE_INFINITY; }
+                if (nouTauler.isGameOver()) {
+                    return Float.NEGATIVE_INFINITY;
+                }
 
-            Set<Point> newList = new HashSet<>(l);
-            newList.remove(moviment);
-            newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
-            beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, d-1));
+                Set<Point> newList = new HashSet<>(l);
+                newList.remove(moviment);
+                newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
+                beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, d-1));
 
-            if(beta < bestAlpha.get()) return alpha;
-            if(beta <= alpha) return alpha;
+                if (beta < bestAlpha.get()) return alpha;
+                if (beta <= alpha) return alpha;
+            }
+            return beta;
         }
-        return beta;
     }
 
 
