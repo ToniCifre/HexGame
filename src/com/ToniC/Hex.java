@@ -18,10 +18,8 @@ import edu.upc.epsevg.prop.hex.players.*;
  * @author bernat
  */
 public class Hex {
-
-
     public static void main(String[] args) {
-        
+        System.out.println("Pene");
         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
