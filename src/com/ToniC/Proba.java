@@ -1,50 +1,17 @@
-package com.ToniC.players.Dijkstra;
+package com.ToniC;
+
+import com.ToniC.players.Dijkstra.*;
 
 import java.awt.*;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public class Dijkstra {
-
-    public static void computePaths(Vertex source)
-    {
-        source.minDistance = 0.;
-        PriorityQueue<Vertex> vertexQueue = new PriorityQueue();
-        vertexQueue.add(source);
-
-        while (!vertexQueue.isEmpty()) {
-            Vertex u = vertexQueue.poll();
-
-            // Visit each edge exiting u
-            for (Edge e : u.adjacencies)
-            {
-                Vertex v = e.target;
-                double weight = e.weight;
-                double distanceThroughU = u.minDistance + weight;
-                if (distanceThroughU < v.minDistance) {
-                    vertexQueue.remove(v);
-
-                    v.minDistance = distanceThroughU ;
-                    v.previous = u;
-                    vertexQueue.add(v);
-                }
-            }
-        }
-    }
-
-    public static List<Point> getShortestPathTo(Vertex target)
-    {
-        List<Point> path = new ArrayList();
-        for (Vertex vertex = target; vertex != null; vertex = vertex.previous)
-            path.add(vertex.name);
-
-        Collections.reverse(path);
-        return path;
-    }
+public class Proba {
 
     public static void main(String[] args)
     {
-        // mark all the vertices
+
         Vertex A = new Vertex(new Point(1,1));
         Vertex B = new Vertex(new Point(1,1));
         Vertex D = new Vertex(new Point(1,1));
@@ -69,11 +36,12 @@ public class Dijkstra {
 //        P.adjacencies = new Edge[]{ new Edge(Z, 18) };
 //        R.adjacencies = new Edge[]{ new Edge(P, 15) };
 //        Z.adjacencies = new Edge[]{ new Edge(P, 18) };
-//
+
 
 //        computePaths(A); // run Dijkstra
 //        System.out.println("Distance to " + Z + ": " + Z.minDistance);
 //        List path = getShortestPathTo(Z);
 //        System.out.println("Path: " + path);
     }
+
 }

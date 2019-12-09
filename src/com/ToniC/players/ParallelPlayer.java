@@ -5,18 +5,19 @@ import edu.upc.epsevg.prop.hex.IAuto;
 import edu.upc.epsevg.prop.hex.IPlayer;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 public class ParallelPlayer implements IPlayer, IAuto {
 
+    private Functions f = new Functions();
 
-    private int depth, color, bestAlpha, winDepth, loseDepth;
+    private int depth, color;
+
+//    private float bestAlpha;
+    private AtomicReference<Float> bestAlpha;
 
     private boolean heuristic;
 
@@ -34,48 +35,38 @@ public class ParallelPlayer implements IPlayer, IAuto {
     public Point move(HexGameStatus tauler, int c) {
         color = c;
 
-        AtomicReference<Point> bestmove = new AtomicReference<>(new Point(-1, -1));
+        List<Point> allStones = f.getNonColorPoints(tauler, 0);
+        List<Point> l;
+        if(!allStones.isEmpty()){
+             l = new ArrayList<>();
+            allStones.stream().map(point -> f.getAllColorNeighbor(tauler, point,0)).forEach(l::addAll);
 
-        bestAlpha = Integer.MIN_VALUE;
+            Set<Object> deptSet = new HashSet<>();
+            l.removeIf(p -> !deptSet.add(p));
 
-        List<Point> l = getMoviments(tauler);
-        System.out.println(l);
-        Point p = checkMoves(tauler, l);
+            System.out.println(l);
+        }else{
+            return new Point(5,5);
+//            l = f.getColorPos(tauler, 0);
+        }
+        Point p = f.checkMoves(tauler, l, color);
         if (p != null) return p;
 
-
-//        l.parallelStream().parallel().forEach(moviment -> {
-//            HexGameStatus nouTauler = new HexGameStatus(tauler);
-//            nouTauler.placeStone(moviment, color);
-//
-//            List<Point> newList = new ArrayList<>(l);
-//            newList.remove(moviment);
-//            int aux = min_value(nouTauler, newList, Integer.MIN_VALUE, Integer.MAX_VALUE, depth);
-//
-//            System.out.println(aux+"    "+moviment+"     "+bestAlpha);
-//
-//            if (aux > bestAlpha) {
-//                bestmove.set(moviment);
-//                bestAlpha = aux;
-//
-//            }
-//        });
-
-
+        bestAlpha = new AtomicReference<>(Float.NEGATIVE_INFINITY);
+        AtomicReference<Point> bestmove = new AtomicReference<>(new Point(-1, -1));
         Parallel.For(l, moviment -> {
             HexGameStatus nouTauler = new HexGameStatus(tauler);
             nouTauler.placeStone(moviment, color);
 
             List<Point> newList = new ArrayList<>(l);
             newList.remove(moviment);
-            int aux = min_value(nouTauler, newList, Integer.MIN_VALUE, Integer.MAX_VALUE, depth);
+            float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, depth);
 
             System.out.println(aux+"    "+moviment+"     "+bestAlpha);
 
-            if (aux >= bestAlpha) {
+            if (aux >= bestAlpha.get()) {
                 bestmove.set(moviment);
-                bestAlpha = aux;
-
+                bestAlpha.set(aux);
             }
         });
 
@@ -83,45 +74,15 @@ public class ParallelPlayer implements IPlayer, IAuto {
         return bestmove.get();
     }
 
-    private Point checkMoves(HexGameStatus tauler, List<Point> l){
-        List<Point> winL =  l.stream().parallel().filter(point -> {
-            HexGameStatus nouTauler = new HexGameStatus(tauler);
-            nouTauler.placeStone(point, color);
-            return nouTauler.isGameOver();
-        }).collect(Collectors.toList());
 
-        return winL.isEmpty() ? null : winL.get(0);
-    }
-
-    private java.util.List<Point> getMoviments(HexGameStatus s) {
-        List<Point> moves = new ArrayList<>();
-        Stream.iterate(0, n -> n + 1).limit(s.getSize())
-                .forEach(i ->
-                        moves.addAll(Stream.iterate(0, t -> t + 1).limit(s.getSize()).parallel()
-                                .filter(j -> s.getPos(j, i) == 0)
-                                .map(j -> new Point(j, i))
-                                .collect(Collectors.toList())));
-        return moves;
-    }
-
-    /**
-     *
-     * @param t Classe Tauler.
-     * @param alpha Enter Alpha.
-     * @param beta Enter Beta.
-     * @param d Enter profunditat.
-     * @return Enter.
-     */
-    private int max_value(HexGameStatus t, List<Point> l, int alpha, int beta, int d){
-        if(d==0) {
-            return 0;
-        }
+    private float max_value(HexGameStatus t, List<Point> l, float alpha, float beta, int d){
+        if(d<=0) { return 0; }
         else{
             for(Point moviment : l) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
                 nouTauler.placeStone(moviment,color);
 
-                if(nouTauler.isGameOver()){ winDepth = d; return Integer.MAX_VALUE; }
+                if(nouTauler.isGameOver()){ return Float.POSITIVE_INFINITY; }
 
                 List<Point> newList = new ArrayList<>(l);
                 newList.remove(moviment);
@@ -133,22 +94,22 @@ public class ParallelPlayer implements IPlayer, IAuto {
         }
     }
 
-    private int min_value(HexGameStatus t, List<Point> l, int alpha, int beta, int d) {
+    private float min_value(HexGameStatus t, List<Point> l, float alpha, float beta, int d) {
         for(Point moviment : l){
             HexGameStatus nouTauler = new HexGameStatus(t);
             nouTauler.placeStone(moviment,-color);
 
-            if(nouTauler.isGameOver()){ loseDepth = d; return Integer.MIN_VALUE; }
+            if(nouTauler.isGameOver()){ return Float.NEGATIVE_INFINITY; }
 
             List<Point> newList = new ArrayList<>(l);
             newList.remove(moviment);
             beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, d-1));
 
-            if(beta < bestAlpha) return Integer.MIN_VALUE;
+            if(beta < bestAlpha.get()) return alpha;
             if(beta <= alpha) return alpha;
         }
         return beta;
     }
-    
+
 
 }

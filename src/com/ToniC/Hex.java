@@ -29,13 +29,13 @@ public class Hex {
 
                 IPlayer test = new TestPlayer("test");
                 IPlayer toni = new PenetratorPlayer(2, true);
-                IPlayer parallel = new ParallelPlayer(2, true);
+                IPlayer parallel = new ParallelPlayer(3, true);
 
 
                 int n = 11;
                 IPlayer random = new RandomPlayer("Crazy Ivan");
                 IPlayer human = new HumanPlayer("Paco");
-                new HexBoard(new HexGameStatus(n), parallel, toni);
+                new HexBoard(new HexGameStatus(n), parallel, human);
                 
             }
         });
