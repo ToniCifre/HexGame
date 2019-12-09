@@ -1,7 +1,5 @@
 package com.ToniC.players;
 
-import com.ToniC.players.Dijkstra.Edge;
-import com.ToniC.players.Dijkstra.Vertex;
 import edu.upc.epsevg.prop.hex.HexGameStatus;
 import javafx.geometry.Point3D;
 
@@ -154,44 +152,4 @@ class Functions {
         }
         return results;
     }
-
-
-
-
-
-
-
-
-
-    /**shitty**/
-    //No Me gusta el uso de vertices y enlaces
-    List<Vertex> vertexs = new ArrayList<>();
-    private Vertex getVertexFromPoint(Point point){
-        return vertexs.parallelStream().filter(v -> v.name.x == point.x && v.name.y == point.y).collect(Collectors.toList()).get(0);
-    }
-
-    List<Vertex> generateGraph(HexGameStatus s){
-        Stream.iterate(0, n -> n + 1).limit(s.getSize())
-                .forEach(i ->
-                        vertexs.addAll(Stream.iterate(0, t -> t + 1).limit(s.getSize())
-                                .filter(j -> s.getPos(i, j) == 0)
-                                .map(j -> new Vertex(new Point(i,j)))
-                                .collect(Collectors.toList())));
-        vertexs.forEach(v -> {
-            v.adjacencies.addAll(getPoints(v.name, neighbor_directions).stream()
-                    .map(point -> new Edge(getVertexFromPoint(point),1))
-                    .collect(Collectors.toList()));
-        });
-        return vertexs;
-    }
-
-    void removeVertex(Point p){
-        Vertex v = getVertexFromPoint(p);
-        vertexs.remove(v);
-        v.adjacencies.forEach(edge -> {
-
-        });
-
-    }
-
 }
