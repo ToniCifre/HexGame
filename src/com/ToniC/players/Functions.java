@@ -31,6 +31,7 @@ class Functions {
             return nouTauler.isGameOver();
         }).collect(Collectors.toList());
 
+        System.out.println("JAJAJAJA");
         return winL.isEmpty() ? null : winL.get(0);
     }
 
