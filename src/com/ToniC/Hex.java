@@ -28,7 +28,6 @@ public class Hex {
             public void run() {
 
                 IPlayer test = new TestPlayer("test");
-                IPlayer toni = new PenetratorPlayer(2, true);
                 IPlayer parallel = new ParallelPlayer(3, true);
 
                 int n = 11;

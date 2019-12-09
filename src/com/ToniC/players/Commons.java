@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class Functions {
+class Commons {
 
     private List<Point> neighbor_directions = Arrays.asList(
             new Point(1, 0), new Point(1, -1), new Point(0, -1),
@@ -34,8 +34,8 @@ class Functions {
         return winL.isEmpty() ? null : winL.get(0);
     }
 
-    List<Point> getColorPoints(HexGameStatus s, int color) {
-        List<Point> moves = new ArrayList<>();
+    Set<Point> getColorPoints(HexGameStatus s, int color) {
+        Set<Point> moves = new HashSet<>();
         Stream.iterate(0, n -> n + 1).limit(s.getSize())
                 .forEach(i ->
                         moves.addAll(Stream.iterate(0, t -> t + 1).limit(s.getSize()).parallel()
@@ -45,8 +45,8 @@ class Functions {
         return moves;
     }
 
-    List<Point> getNonColorPoints(HexGameStatus s, int color) {
-        List<Point> moves = new ArrayList<>();
+    Set<Point> getNonColorPoints(HexGameStatus s, int color) {
+        Set<Point> moves = new HashSet<>();
         Stream.iterate(0, n -> n + 1).limit(s.getSize())
                 .forEach(i ->
                         moves.addAll(Stream.iterate(0, t -> t + 1).limit(s.getSize()).parallel()
