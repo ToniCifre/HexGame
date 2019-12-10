@@ -10,6 +10,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 
 public class ParallelPlayer implements IPlayer, IAuto {
@@ -33,30 +34,30 @@ public class ParallelPlayer implements IPlayer, IAuto {
     @Override
     public Point move(HexGameStatus tauler, int color) {
         this.color = color;
+
+//        euristic(tauler);
+
+        Set<Point> moves;
         Set<Point> allStones = commons.getNonColorPoints(tauler, 0);
-        Set<Point> l;
         if(!allStones.isEmpty()){
-            l = new HashSet<>();
+            moves = new HashSet<>();
             allStones.stream().parallel()
                     .map(point -> commons.getAllColorNeighbor(tauler, point,0))
-                    .forEach(l::addAll);
+                    .forEach(moves::addAll);
         }else{
             return new Point(5,5);
         }
 
-        Point p = commons.checkMoves(tauler, l, color);
+        Point p = commons.checkMoves(tauler, moves, color);
         if (p != null) return p;
-
-        System.out.println(l);
-
 
         bestAlpha = new AtomicReference<>(Float.NEGATIVE_INFINITY);
         AtomicReference<Point> bestmove = new AtomicReference<>(new Point(-1, -1));
-        Parallel.For(l, moviment -> {
+        Parallel.For(moves, moviment -> {
             HexGameStatus nouTauler = new HexGameStatus(tauler);
             nouTauler.placeStone(moviment, color);
 
-            Set<Point> newList = new HashSet<>(l);
+            Set<Point> newList = new HashSet<>(moves);
             newList.remove(moviment);
             newList.addAll(commons.getAllColorNeighbor(tauler, moviment, 0));
             float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, depth-1);
@@ -70,20 +71,21 @@ public class ParallelPlayer implements IPlayer, IAuto {
         });
 
         System.out.println("Moiment final --> "+bestmove.get());
+        if(bestmove.get().equals(new Point(-1, -1)))return moves.iterator().next();
         return bestmove.get();
     }
 
 
-    private float max_value(HexGameStatus t, Set<Point> l, float alpha, float beta, int d){
+    private float max_value(HexGameStatus t, Set<Point> moves, float alpha, float beta, int d){
         if(d<=0) { return euristic(t);
         } else{
-            for(Point moviment : l) {
+            for(Point moviment : moves) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
                 nouTauler.placeStone(moviment,color);
 
                 if(nouTauler.isGameOver()){ return Float.POSITIVE_INFINITY; }
 
-                Set<Point> newList = new HashSet<>(l);
+                Set<Point> newList = new HashSet<>(moves);
                 newList.remove(moviment);
                 newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
                 alpha = Math.max(alpha, min_value(nouTauler, newList, alpha, beta, d-1));
@@ -94,10 +96,10 @@ public class ParallelPlayer implements IPlayer, IAuto {
         }
     }
 
-    private float min_value(HexGameStatus t, Set<Point> l, float alpha, float beta, int d) {
+    private float min_value(HexGameStatus t, Set<Point> moves, float alpha, float beta, int d) {
         if(d<=0) { return euristic(t);
         } else {
-            for (Point moviment : l) {
+            for (Point moviment : moves) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
                 nouTauler.placeStone(moviment, -color);
 
@@ -105,7 +107,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
                     return Float.NEGATIVE_INFINITY;
                 }
 
-                Set<Point> newList = new HashSet<>(l);
+                Set<Point> newList = new HashSet<>(moves);
                 newList.remove(moviment);
                 newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
                 beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, d-1));
@@ -118,21 +120,44 @@ public class ParallelPlayer implements IPlayer, IAuto {
     }
 
 
-    int euristic(HexGameStatus tauler){
+
+    float getScoreFromPath(List<Node> shortestPath, HexGameStatus s, int color){
+        if(!shortestPath.isEmpty()){
+            float score = 0;
+
+            /*List<Node> ll = shortestPath.subList(1,shortestPath.size());
+            for (int i = 0, llSize = ll.size()-2; i < llSize; i++) {
+                Node n = ll.get(i);
+                Node n2 = ll.get(i+2);
+                if(s.getPos(n.getPoint().x,n.getPoint().y)==color
+                        && s.getPos(n2.getPoint().x,n2.getPoint().y)==color
+                        && s.getPos(ll.get(i+1).getPoint().x,n.getPoint().y)==0){
+                    long num = commons.getEmptyNeighbor(s, n.getPoint()).stream()
+                            .filter(point -> commons.getEmptyNeighbor(s, n2.getPoint()).contains(point) ).count();
+                    if (num==2){
+                        score+=0.5;
+                    }
+                }
+            }*/
+            int distance = shortestPath.get(shortestPath.size()-1).getDistance();
+            if(distance == 0)return Float.NEGATIVE_INFINITY;
+            return 21/Math.max(0.0f, distance - score);
+
+        }
+        return Float.NEGATIVE_INFINITY;
+    }
+
+    float euristic(HexGameStatus tauler){
         try {
             Graph g = commons.initializeGreph(tauler,color);
-            g = commons.calculateShortestPathFromSource(g,g.getNodes().get(g.getNodes().size()-2));
-
-            int score = g.getNodes().get(g.getNodes().size()-1).getShortestPath().stream().mapToInt(Node::getDistance).sum();
-
-
             Graph gEnemy = commons.initializeGreph(tauler,-color);
-            gEnemy = commons.calculateShortestPathFromSource(gEnemy,gEnemy.getNodes().get(gEnemy.getNodes().size()-4));
-            int scoreEnemy = gEnemy.getNodes().get(gEnemy.getNodes().size()-3).getShortestPath().stream().mapToInt(Node::getDistance).sum();
+            float score;
+            float scoreEnemy;
 
-            if (score == 0) return -9999999;
-            if (scoreEnemy == 0) return +9999999;
-            return -score+scoreEnemy;
+            score = getScoreFromPath(commons.CalculateShortestPath(g, color), tauler, color);
+            scoreEnemy = getScoreFromPath(commons.CalculateShortestPath(gEnemy, -color), tauler, -color);
+
+            return score - scoreEnemy;
         }catch (Exception e){
             e.printStackTrace();
             return -999999999;

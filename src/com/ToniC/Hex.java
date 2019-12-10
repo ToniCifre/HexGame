@@ -26,13 +26,14 @@ public class Hex {
             public void run() {
 
                 IPlayer test = new TestPlayer("test");
-                IPlayer parallel = new ParallelPlayer(2, true);
+                IPlayer parallel = new ParallelPlayer(3, true);
+                IPlayer parallel2 = new ParallelPlayer(4, true);
 
                 int n = 11;
                 IPlayer random = new RandomPlayer("Crazy Ivan");
                 IPlayer human = new HumanPlayer("Paco");
-                new HexBoard(new HexGameStatus(n), parallel, human);
-                
+                new HexBoard(new HexGameStatus(n), parallel,parallel2);
+
             }
         });
     }
