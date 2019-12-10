@@ -1,5 +1,7 @@
 package com.ToniC.players;
 
+import com.ToniC.players.Dijkstra.Graph;
+import com.ToniC.players.Dijkstra.Node;
 import edu.upc.epsevg.prop.hex.HexGameStatus;
 import javafx.geometry.Point3D;
 
@@ -77,7 +79,7 @@ class Commons {
     List<Point> getAllColorNeighbor(HexGameStatus s, Point point, int color){
         return all_neighbor_directions.parallelStream()
                 .map(direction -> sumPoint(point,direction))
-                .filter(p -> p.x>=0 && p.y>=0 && p.x < 11 && p.y <11 && s.getPos(p.x, p.y) == color)
+                .filter(p -> p.x>=0 && p.y>=0 && p.x < s.getSize() && p.y <s.getSize() && s.getPos(p.x, p.y) == color)
                 .collect(Collectors.toList());
     }
     List<Point> getAllNonColorNeighbor(HexGameStatus s, Point point, int color){
@@ -152,4 +154,122 @@ class Commons {
         }
         return results;
     }
+
+
+
+
+
+
+
+
+    /**       Fucking shit GRAPH**/
+
+
+
+
+    public Graph initializeGreph(HexGameStatus s, int color){
+        Graph graph = new Graph();
+        List<Node> nodes = new ArrayList<>();
+        Stream.iterate(0, n -> n + 1).limit(s.getSize())
+                .forEach(i ->
+                        nodes.addAll(Stream.iterate(0, t -> t + 1).limit(s.getSize())
+                                .filter(j -> s.getPos(i, j) != -color)
+                                .map(j -> new Node(new Point(i, j)))
+                                .collect(Collectors.toList())));
+
+        Node D = new Node(new Point(s.getSize(),0));
+        Node R = new Node(new Point(0,s.getSize()));
+        nodes.stream()
+                .filter(n -> n.getPoint().x == s.getSize()-1 || n.getPoint().y == s.getSize()-1)
+                .forEach(n -> {
+                    if(n.getPoint().y == s.getSize()-1){ n.addDestination(D, 0); }
+                    if(n.getPoint().x == s.getSize()-1){ n.addDestination(R, 0); }
+
+                });
+
+
+        nodes.forEach(node -> {
+            neighbor_directions.stream()
+                    .map(direction -> sumPoint(node.getPoint(),direction))
+                    .filter(p -> p.x>=0 && p.y>=0 && p.x < s.getSize() && p.y <s.getSize() && s.getPos(p.x, p.y) != -color)
+                    .forEach(point -> {
+                        int distance = s.getPos(point.x, point.y) == 0 ? 2 : 0;
+                        int pos = nodes.indexOf(new Node(point));
+                        node.addDestination(nodes.get(pos), distance);
+            });
+            graph.addNode(node);
+        });
+
+        Node T = new Node(new Point(-1,0));
+        Node L = new Node(new Point(0,-1));
+        nodes.stream()
+                .filter(n -> n.getPoint().x == 0 || n.getPoint().y == 0)
+                .forEach(n -> {
+                    if(n.getPoint().y == 0){ T.addDestination(n, 0); }
+                    if(n.getPoint().x == 0){ L.addDestination(n, 0); }
+
+        });
+
+        graph.addNode(T);
+        graph.addNode(D);
+        graph.addNode(L);
+        graph.addNode(R);
+
+        return graph;
+    }
+
+    public Graph calculateShortestPathFromSource(Graph graph, Node source) {
+        try{
+            source.setDistance(0);
+
+            Set<Node> settledNodes = new HashSet<>();
+            Set<Node> unsettledNodes = new HashSet<>();
+
+            unsettledNodes.add(source);
+
+            while (unsettledNodes.size() != 0) {
+                Node currentNode = getLowestDistanceNode(unsettledNodes);
+                unsettledNodes.remove(currentNode);
+                currentNode.getAdjacentNodes().entrySet().forEach(adjacencyPair -> {
+                    Node adjacentNode = adjacencyPair.getKey();
+                    Integer edgeWeight = adjacencyPair.getValue();
+                    if (!settledNodes.contains(adjacentNode)) {
+                        CalculateMinimumDistance(adjacentNode, edgeWeight, currentNode);
+                        unsettledNodes.add(adjacentNode);
+                    }
+                });
+                settledNodes.add(currentNode);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return graph;
+    }
+
+
+    private Node getLowestDistanceNode(Set < Node > unsettledNodes) {
+        Node lowestDistanceNode = null;
+        int lowestDistance = Integer.MAX_VALUE;
+        for (Node node: unsettledNodes) {
+            int nodeDistance = node.getDistance();
+            if (nodeDistance < lowestDistance) {
+                lowestDistance = nodeDistance;
+                lowestDistanceNode = node;
+            }
+        }
+        return lowestDistanceNode;
+    }
+
+    private void CalculateMinimumDistance(Node evaluationNode,
+                                                 Integer edgeWeigh, Node sourceNode) {
+        Integer sourceDistance = sourceNode.getDistance();
+        if (sourceDistance + edgeWeigh < evaluationNode.getDistance()) {
+            evaluationNode.setDistance(sourceDistance + edgeWeigh);
+            LinkedList<Node> shortestPath = new LinkedList<>(sourceNode.getShortestPath());
+            shortestPath.add(sourceNode);
+            evaluationNode.setShortestPath(shortestPath);
+        }
+    }
+
+
 }

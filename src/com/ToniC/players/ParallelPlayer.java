@@ -1,5 +1,7 @@
 package com.ToniC.players;
 
+import com.ToniC.players.Dijkstra.Graph;
+import com.ToniC.players.Dijkstra.Node;
 import edu.upc.epsevg.prop.hex.HexGameStatus;
 import edu.upc.epsevg.prop.hex.IAuto;
 import edu.upc.epsevg.prop.hex.IPlayer;
@@ -31,7 +33,6 @@ public class ParallelPlayer implements IPlayer, IAuto {
     @Override
     public Point move(HexGameStatus tauler, int color) {
         this.color = color;
-
         Set<Point> allStones = commons.getNonColorPoints(tauler, 0);
         Set<Point> l;
         if(!allStones.isEmpty()){
@@ -39,14 +40,15 @@ public class ParallelPlayer implements IPlayer, IAuto {
             allStones.stream().parallel()
                     .map(point -> commons.getAllColorNeighbor(tauler, point,0))
                     .forEach(l::addAll);
-
-            System.out.println(l);
         }else{
             return new Point(5,5);
         }
 
         Point p = commons.checkMoves(tauler, l, color);
         if (p != null) return p;
+
+        System.out.println(l);
+
 
         bestAlpha = new AtomicReference<>(Float.NEGATIVE_INFINITY);
         AtomicReference<Point> bestmove = new AtomicReference<>(new Point(-1, -1));
@@ -57,23 +59,23 @@ public class ParallelPlayer implements IPlayer, IAuto {
             Set<Point> newList = new HashSet<>(l);
             newList.remove(moviment);
             newList.addAll(commons.getAllColorNeighbor(tauler, moviment, 0));
-            float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, depth);
+            float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, depth-1);
 
             System.out.println(aux+"    "+moviment+"     "+bestAlpha);
 
-            if (aux >= bestAlpha.get()) {
+            if (aux > bestAlpha.get()) {
                 bestmove.set(moviment);
                 bestAlpha.set(aux);
             }
         });
 
-
+        System.out.println("Moiment final --> "+bestmove.get());
         return bestmove.get();
     }
 
 
     private float max_value(HexGameStatus t, Set<Point> l, float alpha, float beta, int d){
-        if(d<=0) { return 0;
+        if(d<=0) { return euristic(t);
         } else{
             for(Point moviment : l) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
@@ -93,7 +95,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
     }
 
     private float min_value(HexGameStatus t, Set<Point> l, float alpha, float beta, int d) {
-        if(d<=0) { return 0;
+        if(d<=0) { return euristic(t);
         } else {
             for (Point moviment : l) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
@@ -116,4 +118,24 @@ public class ParallelPlayer implements IPlayer, IAuto {
     }
 
 
+    int euristic(HexGameStatus tauler){
+        try {
+            Graph g = commons.initializeGreph(tauler,color);
+            g = commons.calculateShortestPathFromSource(g,g.getNodes().get(g.getNodes().size()-2));
+
+            int score = g.getNodes().get(g.getNodes().size()-1).getShortestPath().stream().mapToInt(Node::getDistance).sum();
+
+
+            Graph gEnemy = commons.initializeGreph(tauler,-color);
+            gEnemy = commons.calculateShortestPathFromSource(gEnemy,gEnemy.getNodes().get(gEnemy.getNodes().size()-4));
+            int scoreEnemy = gEnemy.getNodes().get(gEnemy.getNodes().size()-3).getShortestPath().stream().mapToInt(Node::getDistance).sum();
+
+            if (score == 0) return -9999999;
+            if (scoreEnemy == 0) return +9999999;
+            return -score+scoreEnemy;
+        }catch (Exception e){
+            e.printStackTrace();
+            return -999999999;
+        }
+    }
 }
