@@ -35,8 +35,6 @@ public class ParallelPlayer implements IPlayer, IAuto {
     public Point move(HexGameStatus tauler, int color) {
         this.color = color;
 
-//        euristic(tauler);
-
         Set<Point> moves;
         Set<Point> allStones = commons.getNonColorPoints(tauler, 0);
         if(!allStones.isEmpty()){
@@ -124,7 +122,6 @@ public class ParallelPlayer implements IPlayer, IAuto {
     float getScoreFromPath(List<Node> shortestPath, HexGameStatus s, int color){
         if(!shortestPath.isEmpty()){
             float score = 0;
-
             /*List<Node> ll = shortestPath.subList(1,shortestPath.size());
             for (int i = 0, llSize = ll.size()-2; i < llSize; i++) {
                 Node n = ll.get(i);

@@ -64,9 +64,6 @@ class Commons {
                 .collect(Collectors.toList());
     }
 
-
-
-
     /**       Fucking shit GRAPH        **/
 
     private List<Point> down_neighbor_directions = Arrays.asList(
@@ -170,7 +167,6 @@ class Commons {
         }
         return graph;
     }
-
 
     private Node getLowestDistanceNode(Set < Node > unsettledNodes) {
         Node lowestDistanceNode = null;
