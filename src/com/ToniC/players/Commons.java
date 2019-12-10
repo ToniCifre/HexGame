@@ -3,7 +3,6 @@ package com.ToniC.players;
 import com.ToniC.players.Dijkstra.Graph;
 import com.ToniC.players.Dijkstra.Node;
 import edu.upc.epsevg.prop.hex.HexGameStatus;
-import javafx.geometry.Point3D;
 
 import java.awt.*;
 import java.util.*;
@@ -47,7 +46,7 @@ class Commons {
         return moves;
     }
 
-    Point sumPoint(Point p, Point dir) {
+    private Point sumPoint(Point p, Point dir) {
         return new Point(p.x+dir.x, p.y+dir.y);
     }
 
