@@ -82,7 +82,7 @@ class Commons {
             new Point(0, -1), new Point(1, -1), new Point(1, 0), new Point(0, 1));
 
     private List<Point> rigth_neighbor_closse_directions = Arrays.asList(
-             new Point(0, 1), new Point(0, -1));
+             new Point(0, 1), new Point(1, -1));
     private List<Point> down_neighbor_closse_directions = Arrays.asList(
             new Point(1, 0), new Point(-1, 1));
 
@@ -134,13 +134,17 @@ class Commons {
                     .map(direction -> sumPoint(node.getPoint(),direction))
                     .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) != -color)
                     .forEach(point -> {
+                        int distance;
+                        if(s.getPos(point.x, point.y) == 0) {
+                            long veins = closs_positions.stream().map(direction -> sumPoint(node.getPoint(), direction))
+                                    .filter(p -> p.x >= 0 && p.y >= 0 && p.x < s.getSize() && p.y < s.getSize() && s.getPos(p.x, p.y) == -color)
+                                    .count();
+                            if(veins >=2)distance = 30;
+                            else distance = 1;
+                        }else{
+                            distance = 0;
+                        }
 
-                        closs_positions.stream().map(direction -> sumPoint(point,direction))
-                                .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) == -color)
-                                .count();
-
-
-                        int distance = s.getPos(point.x, point.y) == 0 ? 1 : 0;
                         int pos = nodes.indexOf(new Node(point));
                         node.addDestination(nodes.get(pos), distance);
                     });
@@ -217,6 +221,8 @@ class Commons {
             score = getScoreFromPath(CalculateShortestPath(g), tauler, color);
             scoreEnemy = getScoreFromPath(CalculateShortestPath(gEnemy), tauler, -color);
 
+            g.getNodes().get(0).getShortestPath().forEach(node -> System.out.print(node.getPoint()));
+            System.out.println();
             System.out.println(score +"     -    "+scoreEnemy+"      --     "+(score - (scoreEnemy)));
             return score - (scoreEnemy);
         }catch (Exception e){
@@ -247,7 +253,7 @@ class Commons {
             }*/
             int distance = shortestPath.get(shortestPath.size()-1).getDistance();
             if(distance == 0)return -999999999;
-            return 21-distance;
+            return -distance;
         }
         System.out.println("no cami");
         return -99999999;

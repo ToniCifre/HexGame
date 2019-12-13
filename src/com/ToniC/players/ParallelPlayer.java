@@ -17,12 +17,12 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
     private Commons commons = new Commons();
 
-    private int depth, color;
+    private int torns, color;
     private AtomicReference<Float> bestAlpha;
     private boolean heuristic;
 
-    public ParallelPlayer(int depth, boolean heuristic) {
-        this.depth = depth;
+    public ParallelPlayer(int torns, boolean heuristic) {
+        this.torns = torns;
         this.heuristic = heuristic;
     }
 
@@ -55,7 +55,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
             Set<Point> newList = new HashSet<>(moves);
             newList.remove(moviment);
             newList.addAll(commons.getAllColorNeighbor(tauler, moviment, 0));
-            float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, depth-1);
+            float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, torns);
 
             System.out.println(aux+"    "+moviment+"     "+bestAlpha);
 
@@ -71,8 +71,8 @@ public class ParallelPlayer implements IPlayer, IAuto {
     }
 
 
-    private float max_value(HexGameStatus t, Set<Point> moves, float alpha, float beta, int d){
-        if(d<=0) { return commons.euristic(t, color);
+    private float max_value(HexGameStatus t, Set<Point> moves, float alpha, float beta, int torn){
+        if(torn<=0) { return commons.euristic(t, color);
         } else{
             for(Point moviment : moves) {
                 HexGameStatus nouTauler = new HexGameStatus(t);
@@ -83,7 +83,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
                 Set<Point> newList = new HashSet<>(moves);
                 newList.remove(moviment);
                 newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
-                alpha = Math.max(alpha, min_value(nouTauler, newList, alpha, beta, d-1));
+                alpha = Math.max(alpha, min_value(nouTauler, newList, alpha, beta, torn));
 
                 if(beta <= alpha) return beta;
             }
@@ -91,29 +91,23 @@ public class ParallelPlayer implements IPlayer, IAuto {
         }
     }
 
-    private float min_value(HexGameStatus t, Set<Point> moves, float alpha, float beta, int d) {
-        if(d<=0) { return commons.euristic(t, color);
-        } else {
-            for (Point moviment : moves) {
-                HexGameStatus nouTauler = new HexGameStatus(t);
-                nouTauler.placeStone(moviment, -color);
+    private float min_value(HexGameStatus t, Set<Point> moves, float alpha, float beta, int torn) {
+        for (Point moviment : moves) {
+            HexGameStatus nouTauler = new HexGameStatus(t);
+            nouTauler.placeStone(moviment, -color);
 
-                if (nouTauler.isGameOver()) {
-                    return Float.NEGATIVE_INFINITY;
-                }
-
-                Set<Point> newList = new HashSet<>(moves);
-                newList.remove(moviment);
-                newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
-                beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, d-1));
-
-                if (beta < bestAlpha.get()) return alpha;
-                if (beta <= alpha) return alpha;
+            if (nouTauler.isGameOver()) {
+                return Float.NEGATIVE_INFINITY;
             }
-            return beta;
+
+            Set<Point> newList = new HashSet<>(moves);
+            newList.remove(moviment);
+            newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
+            beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, torn-1));
+
+            if (beta < bestAlpha.get()) return alpha;
+            if (beta <= alpha) return alpha;
         }
+        return beta;
     }
-
-
-
-    }
+}
