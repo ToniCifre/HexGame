@@ -19,20 +19,21 @@ import edu.upc.epsevg.prop.hex.players.*;
  */
 public class Hex {
     public static void main(String[] args) {
-        System.out.println("Pene");
-        
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
 
-                IPlayer test = new TestPlayer("test");
+//                IPlayer test = new TestPlayer("test");
                 IPlayer parallel = new ParallelPlayer(3, true);
-                IPlayer parallel2 = new ParallelPlayer(4, true);
+                IPlayer parallel2 = new ParallelPlayer(3, true);
+                IPlayer test = new TesterClass();
+
 
                 int n = 11;
                 IPlayer random = new RandomPlayer("Crazy Ivan");
                 IPlayer human = new HumanPlayer("Paco");
-                new HexBoard(new HexGameStatus(n), parallel,parallel2);
+                new HexBoard(new HexGameStatus(n), test, human);
 
             }
         });
