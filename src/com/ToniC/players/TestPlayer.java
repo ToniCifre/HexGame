@@ -22,7 +22,6 @@ public class TestPlayer implements IPlayer, IAuto {
                 if (s.getPos(i, j) == 0) {
                     return new Point(i, j);
                 }else{
-                    System.out.println(s.getPos(i,j));
                 }
             }
         }

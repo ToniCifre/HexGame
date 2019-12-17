@@ -134,13 +134,19 @@ class Commons {
                     .map(direction -> sumPoint(node.getPoint(),direction))
                     .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) != -color)
                     .forEach(point -> {
-                        int distance;
+                        int distance;// = s.getPos(point.x, point.y) == 0 ? 1 : 0;
                         if(s.getPos(point.x, point.y) == 0) {
-                            long veins = closs_positions.stream().map(direction -> sumPoint(node.getPoint(), direction))
+                            distance = 1;
+                            long veins = closs_positions.stream().map(direction -> sumPoint(point, direction))
                                     .filter(p -> p.x >= 0 && p.y >= 0 && p.x < s.getSize() && p.y < s.getSize() && s.getPos(p.x, p.y) == -color)
                                     .count();
-                            if(veins >=2)distance = 30;
-                            else distance = 1;
+                            if(color == 1){
+                                Point next = sumPoint(point, new Point(1,0));
+                                if(veins >=2 && s.getPos(next.x, next.y) == 0) distance = 30;
+                            }else {
+                                Point next = sumPoint(point, new Point(0,1));
+                                if(veins >=2 && s.getPos(next.x, next.y) == 0) distance = 30;
+                            }
                         }else{
                             distance = 0;
                         }
@@ -152,11 +158,10 @@ class Commons {
         });
     }
 
-    List<Node> CalculateShortestPath(Graph g){
+    void CalculateShortestPath(Graph g){
 
         calculateShortestPath(g, g.getNodes().get(g.getNodes().size()-1), g.getNodes().get(0));
 
-        return g.getNodes().get(0).getShortestPath();
     }
 
     private Graph calculateShortestPath(Graph graph, Node source,  Node end) {
@@ -167,8 +172,8 @@ class Commons {
             Set<Node> unsettledNodes = new HashSet<>();
 
             unsettledNodes.add(source);
-
-            while (!unsettledNodes.contains(end) && unsettledNodes.size() != 0) {
+//            !unsettledNodes.contains(end) &&
+            while (unsettledNodes.size() != 0) {
                 Node currentNode = getLowestDistanceNode(unsettledNodes);
                 unsettledNodes.remove(currentNode);
                 currentNode.getAdjacentNodes().forEach((adjacentNode, edgeWeight) -> {
@@ -218,12 +223,13 @@ class Commons {
             Graph g = initializeGraph(tauler,color);
             Graph gEnemy = initializeGraph(tauler,-color);
 
-            score = getScoreFromPath(CalculateShortestPath(g), tauler, color);
-            scoreEnemy = getScoreFromPath(CalculateShortestPath(gEnemy), tauler, -color);
+            CalculateShortestPath(g);
+            CalculateShortestPath(gEnemy);
 
-            g.getNodes().get(0).getShortestPath().forEach(node -> System.out.print(node.getPoint()));
-            System.out.println();
-            System.out.println(score +"     -    "+scoreEnemy+"      --     "+(score - (scoreEnemy)));
+            score = getScoreFromPath(g, tauler, color);
+            scoreEnemy = getScoreFromPath(gEnemy, tauler, -color);
+
+//            System.out.println(score +"     -    "+scoreEnemy+"      --     "+(score - (scoreEnemy)));
             return score - (scoreEnemy);
         }catch (Exception e){
             e.printStackTrace();
@@ -232,8 +238,8 @@ class Commons {
     }
 
 
-    float getScoreFromPath(List<Node> shortestPath, HexGameStatus s, int color){
-        if(!shortestPath.isEmpty()){
+    float getScoreFromPath(Graph g, HexGameStatus s, int color){
+//        if(!shortestPath.isEmpty()){
             /*float score = 0;
             List<Node> ll = shortestPath.subList(1,shortestPath.size());
             for (int i = 0, llSize = ll.size()-2; i < llSize; i++) {
@@ -251,12 +257,28 @@ class Commons {
                     }
                 }
             }*/
-            int distance = shortestPath.get(shortestPath.size()-1).getDistance();
-            if(distance == 0)return -999999999;
+            int distance;
+            if(color == 1){
+                distance = g.getNodes().stream().filter(n -> n.getPoint().x == s.getSize()-1)
+                        .map(Node::getDistance).reduce(0, Integer::sum);
+                long size = g.getNodes().stream().filter(n -> n.getPoint().x == s.getSize()-1).count();
+                if (size != s.getSize()){
+                    distance+=(s.getSize()*(s.getSize()-size));}
+            }else {
+                distance = g.getNodes().stream().filter(n -> n.getPoint().y == s.getSize()-1)
+                        .map(Node::getDistance).reduce(0, Integer::sum);
+                long size = g.getNodes().stream().filter(n -> n.getPoint().y == s.getSize()-1).count();
+                if (size != s.getSize()){
+                    distance+=(s.getSize()*(s.getSize()-size));}
+            }
+
+            int size= g.getNodes().get(0).getShortestPath().size();
+        distance = g.getNodes().get(0).getShortestPath().get(size-1).getDistance() + distance/2;
+        if(distance == 0)return -999999999;
             return -distance;
-        }
-        System.out.println("no cami");
-        return -99999999;
+//        }
+//        System.out.println("no cami");
+//        return -99999999;
     }
 
 

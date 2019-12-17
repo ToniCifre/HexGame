@@ -1,16 +1,12 @@
 package com.ToniC.players;
 
-import com.ToniC.players.Dijkstra.Graph;
-import com.ToniC.players.Dijkstra.Node;
 import edu.upc.epsevg.prop.hex.HexGameStatus;
 import edu.upc.epsevg.prop.hex.IAuto;
 import edu.upc.epsevg.prop.hex.IPlayer;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 
 public class ParallelPlayer implements IPlayer, IAuto {
@@ -19,11 +15,9 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
     private int torns, color;
     private AtomicReference<Float> bestAlpha;
-    private boolean heuristic;
 
-    public ParallelPlayer(int torns, boolean heuristic) {
+    public ParallelPlayer(int torns) {
         this.torns = torns;
-        this.heuristic = heuristic;
     }
 
     @Override

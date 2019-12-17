@@ -24,16 +24,17 @@ public class Hex {
             @Override
             public void run() {
 
-//                IPlayer test = new TestPlayer("test");
-                IPlayer parallel = new ParallelPlayer(3, true);
-                IPlayer parallel2 = new ParallelPlayer(3, true);
+                IPlayer teset = new TestPlayer("test");
+                IPlayer parallel = new ParallelPlayer(2);
+                IPlayer parallel1 = new ParallelPlayer(1);
+                IPlayer parallel2 = new ParallelPlayer(2);
                 IPlayer test = new TesterClass();
 
 
                 int n = 11;
                 IPlayer random = new RandomPlayer("Crazy Ivan");
                 IPlayer human = new HumanPlayer("Paco");
-                new HexBoard(new HexGameStatus(n), test, human);
+                new HexBoard(new HexGameStatus(n), parallel, human);
 
             }
         });
