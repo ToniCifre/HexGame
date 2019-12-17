@@ -32,8 +32,8 @@ public class ParallelPlayer implements IPlayer, IAuto {
         Set<Point> allStones = commons.getNonColorPoints(tauler, 0);
         if(!allStones.isEmpty()){
             moves = new HashSet<>();
-            allStones.stream().parallel()
-                    .map(point -> commons.getAllColorNeighbor(tauler, point,0))
+            allStones.stream()
+                    .map(point -> commons.getAllNeighborColor(tauler, point,0))
                     .forEach(moves::addAll);
         }else{ return new Point(5,5); }
 
@@ -48,7 +48,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
             Set<Point> newList = new HashSet<>(moves);
             newList.remove(moviment);
-            newList.addAll(commons.getAllColorNeighbor(tauler, moviment, 0));
+            newList.addAll(commons.getAllNeighborColor(tauler, moviment, 0));
             float aux = min_value(nouTauler, newList, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, torns);
 
             System.out.println(aux+"    "+moviment+"     "+bestAlpha);
@@ -76,7 +76,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
                 Set<Point> newList = new HashSet<>(moves);
                 newList.remove(moviment);
-                newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
+                newList.addAll(commons.getAllNeighborColor(nouTauler, moviment, 0));
                 alpha = Math.max(alpha, min_value(nouTauler, newList, alpha, beta, torn));
 
                 if(beta <= alpha) return beta;
@@ -96,11 +96,11 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
             Set<Point> newList = new HashSet<>(moves);
             newList.remove(moviment);
-            newList.addAll(commons.getAllColorNeighbor(t, moviment, 0));
+            newList.addAll(commons.getAllNeighborColor(nouTauler, moviment, 0));
             beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, torn-1));
 
-            if (beta < bestAlpha.get()) return alpha;
-            if (beta <= alpha) return alpha;
+//            if (beta < bestAlpha.get()) return alpha;
+            if (beta <= bestAlpha.get() || beta <= alpha) return alpha;
         }
         return beta;
     }

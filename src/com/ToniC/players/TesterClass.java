@@ -15,7 +15,8 @@ public class TesterClass implements IPlayer, IAuto {
     Commons c = new Commons();
     List<Point> pointList =  Arrays.asList(
             new Point(5, 5), new Point(6, 4), new Point(7, 3),
-            new Point(4, 6), new Point(3, 7), new Point(2, 8));
+            new Point(4, 6), new Point(3, 7), new Point(2, 8),
+            new Point(1, 9), new Point(1, 10), new Point(7, 2));
 
     private int pos = -1;
 

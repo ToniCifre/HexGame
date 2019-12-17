@@ -60,7 +60,7 @@ class Commons {
         return new Point(p.x+dir.x, p.y+dir.y);
     }
 
-    List<Point> getAllColorNeighbor(HexGameStatus s, Point point, int color){
+    List<Point> getAllNeighborColor(HexGameStatus s, Point point, int color){
         return all_neighbor_directions.parallelStream()
                 .map(direction -> sumPoint(point,direction))
                 .filter(p -> p.x>=0 && p.y>=0 && p.x < s.getSize() && p.y <s.getSize() && s.getPos(p.x, p.y) == color)
@@ -81,11 +81,6 @@ class Commons {
     private List<Point> rigth_neighbor_directions = Arrays.asList(
             new Point(0, -1), new Point(1, -1), new Point(1, 0), new Point(0, 1));
 
-    private List<Point> rigth_neighbor_closse_directions = Arrays.asList(
-             new Point(0, 1), new Point(1, -1));
-    private List<Point> down_neighbor_closse_directions = Arrays.asList(
-            new Point(1, 0), new Point(-1, 1));
-
     Graph initializeGraph(HexGameStatus s, int color){
         Graph graph = new Graph();
         List<Node> nodes = getNonColorPoints(s,-color).stream().map(Node::new).collect(Collectors.toList());
@@ -96,7 +91,7 @@ class Commons {
                     .forEach(n -> n.addDestination(end, 0));
             graph.addNode(end);
 
-            nose(s, color, graph, nodes, rigth_neighbor_directions, rigth_neighbor_closse_directions);
+            setNodeConnections(s, color, graph, nodes, rigth_neighbor_directions,rigth_close_directions,rigth_close_directions2);
 
             Node start = new Node(new Point(-1,0));
             nodes.stream().parallel().filter(n -> n.getPoint().x == 0)
@@ -112,7 +107,7 @@ class Commons {
                     .forEach(n ->  n.addDestination(end, 0));
             graph.addNode(end);
 
-            nose(s, color, graph, nodes, down_neighbor_directions, down_neighbor_closse_directions);
+            setNodeConnections(s, color, graph, nodes, down_neighbor_directions, down_close_direction, down_close_direction2);
 
             Node start = new Node(new Point(0,-1));
             nodes.stream().parallel().filter(n -> n.getPoint().y == 0)
@@ -126,31 +121,30 @@ class Commons {
         return graph;
     }
 
-    private void nose(HexGameStatus s, int color, Graph graph, List<Node> nodes, List<Point> neighbor_directions,
-                      List<Point> closs_positions) {
+    private List<Point> down_close_direction = Arrays.asList(new Point(-1,0), new Point(0, 1));
+    private List<Point> down_close_direction2 = Arrays.asList(new Point(1,0), new Point(-1, 1));
 
+    private List<Point>  rigth_close_directions = Arrays.asList(new Point(0,-1), new Point(1, 0));
+    private List<Point>  rigth_close_directions2 = Arrays.asList(new Point(0,1), new Point(1, -1));
+
+    private void setNodeConnections(HexGameStatus s, int color, Graph graph, List<Node> nodes, List<Point> neighbor_directions,
+                                    List<Point> close_directions, List<Point> close_directions2) {
         nodes.forEach(node -> {
             neighbor_directions.stream()
                     .map(direction -> sumPoint(node.getPoint(),direction))
                     .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) != -color)
                     .forEach(point -> {
-                        int distance;// = s.getPos(point.x, point.y) == 0 ? 1 : 0;
-                        if(s.getPos(point.x, point.y) == 0) {
-                            distance = 1;
-                            long veins = closs_positions.stream().map(direction -> sumPoint(point, direction))
-                                    .filter(p -> p.x >= 0 && p.y >= 0 && p.x < s.getSize() && p.y < s.getSize() && s.getPos(p.x, p.y) == -color)
-                                    .count();
-                            if(color == 1){
-                                Point next = sumPoint(point, new Point(1,0));
-                                if(veins >=2 && s.getPos(next.x, next.y) == 0) distance = 30;
+                        int distance;
+                        if (s.getPos(point.x, point.y) == 0){
+                            if (isClossed(s, color, close_directions, close_directions2.get(1), point)
+                                    || isClossed(s, color, close_directions2, close_directions.get(1), point)){
+                                distance = 30;
                             }else {
-                                Point next = sumPoint(point, new Point(0,1));
-                                if(veins >=2 && s.getPos(next.x, next.y) == 0) distance = 30;
+                                distance = 1;
                             }
                         }else{
                             distance = 0;
                         }
-
                         int pos = nodes.indexOf(new Node(point));
                         node.addDestination(nodes.get(pos), distance);
                     });
@@ -158,21 +152,31 @@ class Commons {
         });
     }
 
-    void CalculateShortestPath(Graph g){
+    private boolean isClossed(HexGameStatus s, int color, List<Point> close_directions, Point dirNext, Point point) {
+        boolean isColor;
 
-        calculateShortestPath(g, g.getNodes().get(g.getNodes().size()-1), g.getNodes().get(0));
-
+        Point next = sumPoint(dirNext, point);
+        if(next.x>=0 && next.y>=0 && next.x <s.getSize() && next.y<s.getSize()){
+            isColor = s.getPos(next.x, next.y) != color;
+        }else{
+            isColor = false;
+        }
+        return  close_directions.stream().parallel()
+                    .map(direction -> sumPoint(point,direction))
+                    .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) == -color)
+                    .count() == 2
+                && isColor;
     }
 
-    private Graph calculateShortestPath(Graph graph, Node source,  Node end) {
+    private void calculateShortestPath(Graph grap) {
         try{
+            Node source = grap.getNodes().get(grap.getNodes().size()-1);
             source.setDistance(0);
 
             Set<Node> settledNodes = new HashSet<>();
             Set<Node> unsettledNodes = new HashSet<>();
 
             unsettledNodes.add(source);
-//            !unsettledNodes.contains(end) &&
             while (unsettledNodes.size() != 0) {
                 Node currentNode = getLowestDistanceNode(unsettledNodes);
                 unsettledNodes.remove(currentNode);
@@ -187,7 +191,6 @@ class Commons {
         }catch (Exception e){
             e.printStackTrace();
         }
-        return graph;
     }
 
     private Node getLowestDistanceNode(Set < Node > unsettledNodes) {
@@ -223,11 +226,11 @@ class Commons {
             Graph g = initializeGraph(tauler,color);
             Graph gEnemy = initializeGraph(tauler,-color);
 
-            CalculateShortestPath(g);
-            CalculateShortestPath(gEnemy);
+            calculateShortestPath(g);
+            calculateShortestPath(gEnemy);
 
-            score = getScoreFromPath(g, tauler, color);
-            scoreEnemy = getScoreFromPath(gEnemy, tauler, -color);
+            score = getScoreFromPath(g);
+            scoreEnemy = getScoreFromPath(gEnemy);
 
 //            System.out.println(score +"     -    "+scoreEnemy+"      --     "+(score - (scoreEnemy)));
             return score - (scoreEnemy);
@@ -238,57 +241,15 @@ class Commons {
     }
 
 
-    float getScoreFromPath(Graph g, HexGameStatus s, int color){
-//        if(!shortestPath.isEmpty()){
-            /*float score = 0;
-            List<Node> ll = shortestPath.subList(1,shortestPath.size());
-            for (int i = 0, llSize = ll.size()-2; i < llSize; i++) {
-                Node n = ll.get(i);
-                Node n2 = ll.get(i+2);
-                if(     s.getPos(n.getPoint().x,n.getPoint().y) == color &&
-                        s.getPos(n2.getPoint().x,n2.getPoint().y) == color &&
-                        s.getPos(ll.get(i+1).getPoint().x,ll.get(i+1).getPoint().y) == 0)
-                {
+    float getScoreFromPath(Graph g){
+        int size= g.getNodes().get(0).getShortestPath().size();
+        if(size <= 0) return -999999;
+        int distance = g.getNodes().get(0).getShortestPath().get(size-1).getDistance();
 
-                    long num = getEmptyNeighbor(s, n.getPoint()).stream()
-                            .filter(point -> getEmptyNeighbor(s, n2.getPoint()).contains(point) ).count();
-                    if (num==2){
-                        score+=0.5;
-                    }
-                }
-            }*/
-            int distance;
-            if(color == 1){
-                distance = g.getNodes().stream().filter(n -> n.getPoint().x == s.getSize()-1)
-                        .map(Node::getDistance).reduce(0, Integer::sum);
-                long size = g.getNodes().stream().filter(n -> n.getPoint().x == s.getSize()-1).count();
-                if (size != s.getSize()){
-                    distance+=(s.getSize()*(s.getSize()-size));}
-            }else {
-                distance = g.getNodes().stream().filter(n -> n.getPoint().y == s.getSize()-1)
-                        .map(Node::getDistance).reduce(0, Integer::sum);
-                long size = g.getNodes().stream().filter(n -> n.getPoint().y == s.getSize()-1).count();
-                if (size != s.getSize()){
-                    distance+=(s.getSize()*(s.getSize()-size));}
-            }
-
-            int size= g.getNodes().get(0).getShortestPath().size();
-        distance = g.getNodes().get(0).getShortestPath().get(size-1).getDistance() + distance/2;
+//        g.getNodes().get(0).getShortestPath().forEach(node -> System.out.print(node.getPoint()));
+//        System.out.println();
         if(distance == 0)return -999999999;
             return -distance;
-//        }
-//        System.out.println("no cami");
-//        return -99999999;
     }
 
-
-
-
-    void print_graph(Graph g){
-        g.getNodes().forEach(node -> {
-            System.out.print(node.getPoint());
-            node.getAdjacentNodes().forEach((node1, integer) -> System.out.print(integer+" - "));
-            System.out.println();
-        });
-    }
 }

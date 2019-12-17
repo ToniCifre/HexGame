@@ -25,9 +25,8 @@ public class Hex {
             public void run() {
 
                 IPlayer teset = new TestPlayer("test");
-                IPlayer parallel = new ParallelPlayer(2);
-                IPlayer parallel1 = new ParallelPlayer(1);
-                IPlayer parallel2 = new ParallelPlayer(2);
+                IPlayer parallel = new ParallelPlayer(1);
+                IPlayer parallel1 = new ParallelPlayer(2);
                 IPlayer test = new TesterClass();
 
 
