@@ -23,7 +23,7 @@ public class HumanPlayer  implements IPlayer{
     
     @Override
     public Point move(HexGameStatus s, int color) {
-        return null;       
+        return null;
     }
     
  

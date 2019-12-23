@@ -161,11 +161,10 @@ class Commons {
         }else{
             isColor = false;
         }
-        return  close_directions.stream().parallel()
+        return  isColor &&  close_directions.stream().parallel()
                     .map(direction -> sumPoint(point,direction))
                     .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) == -color)
-                    .count() == 2
-                && isColor;
+                    .count() == 2;
     }
 
     private void calculateShortestPath(Graph grap) {
@@ -229,10 +228,15 @@ class Commons {
             calculateShortestPath(g);
             calculateShortestPath(gEnemy);
 
-            score = getScoreFromPath(g);
-            scoreEnemy = getScoreFromPath(gEnemy);
-
+            score = getScoreFromPath(g, tauler, color);
+            scoreEnemy = getScoreFromPath(gEnemy, tauler, -color);
 //            System.out.println(score +"     -    "+scoreEnemy+"      --     "+(score - (scoreEnemy)));
+
+            if(score == 0) return 999999;
+            if(scoreEnemy == 0) return -999999;
+            if(score == -999999) return -999999;
+            if(scoreEnemy == -999999) return 999999;
+
             return score - (scoreEnemy);
         }catch (Exception e){
             e.printStackTrace();
@@ -241,15 +245,31 @@ class Commons {
     }
 
 
-    float getScoreFromPath(Graph g){
+    float getScoreFromPath(Graph g, HexGameStatus tauler, int color){
+        float distance;
+        List<Node> aux;
         int size= g.getNodes().get(0).getShortestPath().size();
-        if(size <= 0) return -999999;
-        int distance = g.getNodes().get(0).getShortestPath().get(size-1).getDistance();
+        if(size == 0) return -999999;
 
+        if(color == 1){
+            aux = g.getNodes().stream()
+                    .filter(n -> n.getPoint().x == tauler.getSize()-1).collect(Collectors.toList());
+        }else {
+            aux = g.getNodes().stream()
+                    .filter(n -> n.getPoint().y == tauler.getSize()-1).collect(Collectors.toList());
+        }
+
+        distance = aux.stream().map(Node::getDistance).reduce(0, Integer::sum);
+        if(aux.size() < tauler.getSize()){ distance += aux.size()*(tauler.getSize() - aux.size()); }
+
+        float tt = g.getNodes().get(0).getShortestPath().get(size-1).getDistance();
+        distance = tt * tt + distance;
+
+//        System.out.println(distance);
 //        g.getNodes().get(0).getShortestPath().forEach(node -> System.out.print(node.getPoint()));
 //        System.out.println();
-        if(distance == 0)return -999999999;
-            return -distance;
+
+        return -distance;
     }
 
 }

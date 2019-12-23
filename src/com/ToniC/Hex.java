@@ -2,6 +2,7 @@ package com.ToniC;
 
 import com.ToniC.players.*;
 import edu.upc.epsevg.prop.hex.*;
+import edu.upc.epsevg.prop.hex.players.ProfePlayer;
 
 import javax.swing.*;
 
@@ -24,16 +25,15 @@ public class Hex {
             @Override
             public void run() {
 
-                IPlayer teset = new TestPlayer("test");
                 IPlayer parallel = new ParallelPlayer(1);
                 IPlayer parallel1 = new ParallelPlayer(2);
                 IPlayer test = new TesterClass();
+                IPlayer pp = new ProfePlayer("fasd",2);
 
 
                 int n = 11;
-                IPlayer random = new RandomPlayer("Crazy Ivan");
                 IPlayer human = new HumanPlayer("Paco");
-                new HexBoard(new HexGameStatus(n), parallel, human);
+                new HexBoard(new HexGameStatus(n), parallel, pp);
 
             }
         });
