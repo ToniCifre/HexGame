@@ -91,13 +91,14 @@ class Commons {
                     .forEach(n -> n.addDestination(end, 0));
             graph.addNode(end);
 
-            setNodeConnections(s, color, graph, nodes, rigth_neighbor_directions,rigth_close_directions,rigth_close_directions2);
+            setNodeConnections(s, color, graph, nodes, rigth_neighbor_directions, rigth_close_directions,
+                    rigth_close_directions2, next_rigth_direction);
 
             Node start = new Node(new Point(-1,0));
             nodes.stream().parallel().filter(n -> n.getPoint().x == 0)
                     .forEach(n -> {
                             if (s.getPos(n.getPoint().x, n.getPoint().y) == color) start.addDestination(n, 0);
-                            else start.addDestination(n, 1);
+                            else start.addDestination(n, 4);
                     });
             graph.addNode(start);
 
@@ -107,13 +108,14 @@ class Commons {
                     .forEach(n ->  n.addDestination(end, 0));
             graph.addNode(end);
 
-            setNodeConnections(s, color, graph, nodes, down_neighbor_directions, down_close_direction, down_close_direction2);
+            setNodeConnections(s, color, graph, nodes, down_neighbor_directions, down_close_direction,
+                    down_close_direction2, next_down_direction);
 
             Node start = new Node(new Point(0,-1));
             nodes.stream().parallel().filter(n -> n.getPoint().y == 0)
                     .forEach(n -> {
                             if (s.getPos(n.getPoint().x, n.getPoint().y) == color) start.addDestination(n, 0);
-                            else start.addDestination(n, 1);
+                            else start.addDestination(n, 4);
                     });
             graph.addNode(start);
         }
@@ -127,8 +129,12 @@ class Commons {
     private List<Point>  rigth_close_directions = Arrays.asList(new Point(0,-1), new Point(1, 0));
     private List<Point>  rigth_close_directions2 = Arrays.asList(new Point(0,1), new Point(1, -1));
 
+    private List<Point>  next_rigth_direction = Arrays.asList(new Point(1,1), new Point(2, -1),new Point(1,-2));
+    private List<Point>  next_down_direction = Arrays.asList(new Point(-1,2), new Point(1, 1), new Point(-2,1));
+
     private void setNodeConnections(HexGameStatus s, int color, Graph graph, List<Node> nodes, List<Point> neighbor_directions,
-                                    List<Point> close_directions, List<Point> close_directions2) {
+                                    List<Point> close_directions, List<Point> close_directions2,
+                                    List<Point> next_direction) {
         nodes.forEach(node -> {
             neighbor_directions.stream()
                     .map(direction -> sumPoint(node.getPoint(),direction))
@@ -138,13 +144,14 @@ class Commons {
                         if (s.getPos(point.x, point.y) == 0){
                             if (isClossed(s, color, close_directions, close_directions2.get(1), point)
                                     || isClossed(s, color, close_directions2, close_directions.get(1), point)){
-                                distance = 30;
+                                distance = 10;
                             }else {
-                                distance = 1;
+                                distance = isDiagonal(s, color, neighbor_directions, next_direction, node, point) ? 1:6;
                             }
                         }else{
                             distance = 0;
                         }
+
                         int pos = nodes.indexOf(new Node(point));
                         node.addDestination(nodes.get(pos), distance);
                     });
@@ -152,14 +159,25 @@ class Commons {
         });
     }
 
+    private boolean isDiagonal(HexGameStatus s, int color, List<Point> neighbor_directions, List<Point> next_direction,
+                               Node node, Point point){
+        List<Point> dig = next_direction.stream().parallel()
+                .map(direction -> sumPoint(node.getPoint(),direction))
+                .filter(p -> p.x>=0 && p.y>=0 && p.x <s.getSize() && p.y<s.getSize() && s.getPos(p.x, p.y) == color)
+                .collect(Collectors.toList());
+
+        return neighbor_directions.stream().parallel()
+                .map(direction -> sumPoint(point, direction))
+                .anyMatch(p -> p.x >= 0 && p.y >= 0 && p.x < s.getSize() && p.y < s.getSize()
+                        && s.getPos(p.x, p.y) == color && dig.contains(p));
+    }
+
     private boolean isClossed(HexGameStatus s, int color, List<Point> close_directions, Point dirNext, Point point) {
-        boolean isColor;
+        boolean isColor = true;
 
         Point next = sumPoint(dirNext, point);
         if(next.x>=0 && next.y>=0 && next.x <s.getSize() && next.y<s.getSize()){
             isColor = s.getPos(next.x, next.y) != color;
-        }else{
-            isColor = false;
         }
         return  isColor &&  close_directions.stream().parallel()
                     .map(direction -> sumPoint(point,direction))
@@ -192,7 +210,7 @@ class Commons {
         }
     }
 
-    private Node getLowestDistanceNode(Set < Node > unsettledNodes) {
+    private Node getLowestDistanceNode(Set <Node> unsettledNodes) {
         Node lowestDistanceNode = null;
         int lowestDistance = Integer.MAX_VALUE;
         for (Node node: unsettledNodes) {
@@ -230,7 +248,6 @@ class Commons {
 
             score = getScoreFromPath(g, tauler, color);
             scoreEnemy = getScoreFromPath(gEnemy, tauler, -color);
-//            System.out.println(score +"     -    "+scoreEnemy+"      --     "+(score - (scoreEnemy)));
 
             if(score == 0) return 999999;
             if(scoreEnemy == 0) return -999999;
@@ -260,16 +277,13 @@ class Commons {
         }
 
         distance = aux.stream().map(Node::getDistance).reduce(0, Integer::sum);
-        if(aux.size() < tauler.getSize()){ distance += aux.size()*(tauler.getSize() - aux.size()); }
+        if(aux.size() < tauler.getSize()){ distance += tauler.getSize()*(tauler.getSize() - aux.size()); }
 
         float tt = g.getNodes().get(0).getShortestPath().get(size-1).getDistance();
-        distance = tt * tt + distance;
-
-//        System.out.println(distance);
-//        g.getNodes().get(0).getShortestPath().forEach(node -> System.out.print(node.getPoint()));
-//        System.out.println();
+        distance = tt + distance/6;
 
         return -distance;
     }
+
 
 }

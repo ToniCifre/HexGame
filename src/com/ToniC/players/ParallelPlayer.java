@@ -22,13 +22,13 @@ public class ParallelPlayer implements IPlayer, IAuto {
 
     @Override
     public String getName() {
-        return "Penetrator";
+        return "Hex";
     }
 
     @Override
     public Point move(HexGameStatus tauler, int color) {
         this.color = color;
-        Set<Point> moves;// = commons.getColorPoints(tauler,0);
+        Set<Point> moves;
         Set<Point> allStones = commons.getNonColorPoints(tauler, 0);
         if(!allStones.isEmpty()){
             moves = new HashSet<>();
@@ -99,8 +99,7 @@ public class ParallelPlayer implements IPlayer, IAuto {
             newList.addAll(commons.getAllNeighborColor(nouTauler, moviment, 0));
             beta = Math.min(beta, max_value(nouTauler, newList, alpha, beta, torn-1));
 
-//            if (beta < bestAlpha.get()) return alpha;
-            if (beta <= bestAlpha.get() || beta <= alpha) return alpha;
+            if (beta < bestAlpha.get() || beta <= alpha) return alpha;
         }
         return beta;
     }

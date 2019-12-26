@@ -33,7 +33,7 @@ public class Hex {
 
                 int n = 11;
                 IPlayer human = new HumanPlayer("Paco");
-                new HexBoard(new HexGameStatus(n), parallel, pp);
+                new HexBoard(new HexGameStatus(n), pp,parallel);
 
             }
         });
